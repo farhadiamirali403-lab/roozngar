@@ -449,6 +449,8 @@ document.addEventListener('click', e => {
     case 'mood': setMood(a.dataset.k, +a.dataset.v); break;
     case 'mood-clear': { const j = S.journal[a.dataset.k]; if (j) { delete j.mood; if (!j.note) delete S.journal[a.dataset.k]; Store.touchMeta(); render(); } break; }
     case 'share-day': shareDay(); break;
+    case 'install': installApp(); break;
+    case 'install-later': UI.installDismissed = true; saveUI(); render(); break;
     case 'hide-swipe-hint': UI.swipeHint = false; saveUI(); render(); break;
     case 'm-close': closeModal(); break;
     case 'm-ok': { const f = modalOk; closeModal(); if (f) f(); break; }
@@ -630,6 +632,18 @@ window.addEventListener('scroll', () => {
   const m = $('.mbar');
   if (m) m.classList.toggle('scrolled', window.scrollY > 4);
 }, { passive: true });
+
+/* ---------- نصب نسخه وب (PWA) ---------- */
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; requestRender(); });
+window.addEventListener('appinstalled', () => { installPrompt = null; toast('روزنگار نصب شد.', { kind: 'good' }); requestRender(); });
+async function installApp() {
+  if (!installPrompt) return;
+  const p = installPrompt;
+  installPrompt = null;
+  try { await p.prompt(); await p.userChoice; } catch (e) { /* */ }
+  render();
+}
 
 /* ---------- راه‌اندازی ---------- */
 let dayKey = todayKey();

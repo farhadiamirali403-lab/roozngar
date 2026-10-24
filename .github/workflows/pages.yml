@@ -1,0 +1,35 @@
+name: Web App (GitHub Pages)
+
+on:
+  push:
+    branches: ['main', 'claude/ui-ux-features-android-efoesm']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Test core logic
+        run: node test/core.test.js
+
+      - name: Publish www/ to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./www
+          publish_branch: gh-pages
+          enable_jekyll: false
+          commit_message: 'Deploy web app'

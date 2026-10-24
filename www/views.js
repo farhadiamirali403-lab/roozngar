@@ -34,6 +34,7 @@ function viewToday() {
   const html = `
   ${head(fmtDate(t0, { weekday: true }) + (hol ? ` · <span class="txt-crit">${hol}</span>` : ''), greeting() + (S.settings.name ? '، ' + esc(S.settings.name) : ''), '', `<button class="icon-btn" data-act="share-day" aria-label="اشتراک خلاصه امروز" title="اشتراک خلاصه امروز">${icon('share')}</button>`)}
   ${welcome ? welcomeCard() : ''}
+  ${installPrompt && !UI.installDismissed ? `<div class="banner install-banner">${icon('download')}<span>روزنگار را مثل یک برنامه روی گوشی یا رایانه‌ات نصب کن؛ بدون اینترنت هم کار می‌کند.</span><button class="btn sm primary" data-act="install">نصب</button><button class="icon-btn sm" data-act="install-later" aria-label="بعداً">${icon('x')}</button></div>` : ''}
   <section class="hero">
     <div class="hero-ring score-ring">${ring(Math.min(1, doneToday.length / goal), 96, 9)}<div class="ring-num"><b>${faNum(doneToday.length)}</b><span>از ${faNum(goal)}</span></div></div>
     <div class="hero-stats">
@@ -598,7 +599,7 @@ function viewSettings() {
       <div class="btn-row">${hasSample() ? `<button class="btn" data-act="remove-sample">حذف داده نمونه</button>` : `<button class="btn" data-act="load-sample">بارگذاری داده نمونه</button>`}<button class="btn danger ghost" data-act="clear-all">پاک کردن همه داده‌ها</button></div>
     </section>
     <section class="card set-sec span-all only-d"><h3>میان‌برهای صفحه‌کلید</h3>${shortcutsTable()}</section>
-    <section class="card set-sec span-all"><div class="about">${MARK}<div><b>روزنگار</b> <span class="muted sm">نسخه ${fa(APP_VERSION)}</span><p class="muted sm">کارها، عادت‌ها و تمرکز با تقویم شمسی. بدون تبلیغ، بدون ردیابی؛ داده‌ها مال خودت است.</p></div></div></section>
+    <section class="card set-sec span-all"><div class="about">${MARK}<div><b>روزنگار</b> <span class="muted sm">نسخه ${fa(APP_VERSION)}</span><p class="muted sm">کارها، عادت‌ها و تمرکز با تقویم شمسی. بدون تبلیغ، بدون ردیابی؛ داده‌ها مال خودت است.</p></div>${installPrompt ? `<button class="btn primary push" data-act="install">${icon('download')}نصب برنامه</button>` : ''}</div></section>
   </div>`;
   return { html };
 }

@@ -71,8 +71,8 @@ const UI = Object.assign({
 }, (() => { try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } })());
 function saveUI() {
   try {
-    const { view, projectId, tag, sort, fStatus, statsRange, actMetric, showDoneToday, boardProject, lastSub, swipeHint } = UI;
-    localStorage.setItem(UI_KEY, JSON.stringify({ view, projectId, tag, sort, fStatus, statsRange, actMetric, showDoneToday, boardProject, lastSub, swipeHint }));
+    const { view, projectId, tag, sort, fStatus, statsRange, actMetric, showDoneToday, boardProject, lastSub, swipeHint, installDismissed } = UI;
+    localStorage.setItem(UI_KEY, JSON.stringify({ view, projectId, tag, sort, fStatus, statsRange, actMetric, showDoneToday, boardProject, lastSub, swipeHint, installDismissed }));
   } catch (e) { /* */ }
 }
 

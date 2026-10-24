@@ -166,6 +166,8 @@ code { font-family: var(--font); background: var(--surface-2); padding: 1px 7px;
 .banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--r); background: var(--warn-soft); color: var(--warn); font-size: var(--fs-s); margin-top: 16px; flex-wrap: wrap; }
 .banner span { flex: 1; }
 .banner .link { color: inherit; text-decoration: underline; }
+.install-banner { background: var(--accent-soft); color: var(--ink-2); margin-top: 0; }
+.install-banner > .ic { color: var(--accent); }
 .welcome { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 20px; border-radius: var(--r-l); background: var(--accent-soft); }
 .welcome-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--surface); color: var(--accent); flex: none; }
 .welcome-ic .ic { width: 22px; height: 22px; }
