@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>روزنگار</title>
+<meta name="description" content="مدیریت کارها، عادت‌ها و تمرکز با تقویم شمسی، نقشه فعالیت و تحلیل بهره‌وری">
+<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  /* پوسته پیش از رندر اعمال می‌شود تا صفحه چشمک نزند */
+  (function () {
+    try {
+      var d = JSON.parse(localStorage.getItem('roozngar:v1') || '{}').settings || {};
+      var t = d.theme || 'auto', dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      var r = document.documentElement;
+      if (dark) r.classList.add('dark');
+      if (d.accent) r.dataset.accent = d.accent;
+      if (d.fontScale) r.dataset.fs = d.fontScale;
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app" class="app" dir="rtl">
+  <aside id="side" class="side" aria-label="منوی اصلی"></aside>
+  <main id="main" class="main" tabindex="-1"></main>
+</div>
+<nav id="tabbar" class="tabbar" dir="rtl" aria-label="ناوبری"></nav>
+<button id="fab" class="fab" data-act="add-sheet" aria-label="افزودن کار جدید"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" dir="rtl" aria-label="جزئیات کار"></aside>
+<div id="sheet" class="sheet-wrap" dir="rtl" hidden></div>
+<div id="modal" class="modal-wrap" dir="rtl" hidden></div>
+<div id="palette" class="modal-wrap pal-wrap" dir="rtl" hidden></div>
+<div id="dp" class="dp" dir="rtl" hidden></div>
+<div id="toasts" class="toasts" dir="rtl" aria-live="polite"></div>
+<div id="tip" class="tip" dir="rtl" hidden></div>
+<canvas id="confetti" class="confetti" aria-hidden="true" hidden></canvas>
+
+<script src="core.js"></script>
+<script src="native.js"></script>
+<script src="charts.js"></script>
+<script src="ui.js"></script>
+<script src="views.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

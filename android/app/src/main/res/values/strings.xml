@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">روزنگار</string>
+    <string name="title_activity_main">روزنگار</string>
+    <string name="package_name">ir.roozngar.app</string>
+    <string name="custom_url_scheme">ir.roozngar.app</string>
+</resources>

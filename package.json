@@ -1,0 +1,27 @@
+{
+  "name": "roozngar",
+  "version": "2.0.0",
+  "private": true,
+  "description": "روزنگار — مدیریت کارها، عادت‌ها و تمرکز با تقویم شمسی",
+  "scripts": {
+    "sync": "cap sync android",
+    "android": "cap sync android && cap open android",
+    "apk": "cap sync android && cd android && ./gradlew assembleDebug",
+    "serve": "npx --yes http-server www -p 8080 -c-1",
+    "test": "node test/core.test.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
+    "@capacitor/share": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "vazirmatn": "^33.0.3"
+  }
+}

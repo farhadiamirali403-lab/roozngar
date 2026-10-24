@@ -114,10 +114,15 @@ function fmtMin(m) {
 const fmtHours = m => m >= 60 ? faNum(m / 60, 1) + ' ساعت' : faNum(Math.round(m)) + ' دقیقه';
 
 /* ---------- داده‌ها ---------- */
-const DEFAULT_SETTINGS = { name: '', dailyGoal: 5, theme: 'light', sound: true, welcomed: false, pomo: { work: 25, short: 5, long: 15, every: 4 } };
+const DEFAULT_SETTINGS = {
+  name: '', dailyGoal: 5, theme: 'auto', accent: 'green', fontScale: 'm', sound: true, haptics: true, welcomed: false,
+  notify: false, remindBefore: 10, dailyReminder: '', ambient: 'off', autoNext: false,
+  pomo: { work: 25, short: 5, long: 15, every: 4 },
+};
+const ACCENTS = { green: 'سبز', blue: 'آبی', violet: 'بنفش', rose: 'سرخابی', orange: 'نارنجی', teal: 'فیروزه‌ای' };
 const taskDefaults = () => ({ title: '', notes: '', projectId: null, tags: [], priority: 0, status: 'todo', due: null, time: null, recur: null, estimate: 0, focus: 0, subtasks: [], createdAt: Date.now(), completedAt: null, order: Date.now() });
 const normTask = t => Object.assign(taskDefaults(), t);
-const S = { tasks: new Map(), projects: [], settings: clone(DEFAULT_SETTINGS), focusLog: {}, focusSample: {} };
+const S = { tasks: new Map(), projects: [], settings: clone(DEFAULT_SETTINGS), focusLog: {}, focusSample: {}, habits: [], habitLog: {}, journal: {} };
 
 const PRI = [
   { name: 'بدون اولویت', short: 'بدون', xp: 5 },
@@ -141,7 +146,7 @@ function bucketBody(b) {
   for (const t of S.tasks.values()) if (bucketOf(t) === b) { tasks[t.id] = t; n++; }
   return n ? { v: 1, tasks } : null;
 }
-const metaBody = () => ({ v: 1, projects: S.projects, settings: S.settings, focusLog: S.focusLog, focusSample: S.focusSample });
+const metaBody = () => ({ v: 1, projects: S.projects, settings: S.settings, focusLog: S.focusLog, focusSample: S.focusSample, habits: S.habits, habitLog: S.habitLog, journal: S.journal });
 
 /* ---------- ذخیره‌سازی: ابری (db هر کاربر) با پشتیبان محلی ---------- */
 const LS_KEY = 'roozngar:v1';
@@ -157,9 +162,13 @@ const Store = {
     S.projects = Array.isArray(m.projects) ? m.projects : [];
     S.settings = Object.assign(clone(DEFAULT_SETTINGS), m.settings || {});
     S.settings.pomo = Object.assign(clone(DEFAULT_SETTINGS.pomo), (m.settings && m.settings.pomo) || {});
-    if (S.settings.theme !== 'dark') S.settings.theme = 'light';
+    if (!['light', 'dark', 'auto'].includes(S.settings.theme)) S.settings.theme = 'auto';
+    if (!ACCENTS[S.settings.accent]) S.settings.accent = 'green';
     S.focusLog = m.focusLog || {};
     S.focusSample = m.focusSample || {};
+    S.habits = Array.isArray(m.habits) ? m.habits : [];
+    S.habitLog = m.habitLog || {};
+    S.journal = m.journal || {};
   },
   hydrateAll(d) {
     S.tasks = new Map((d.tasks || []).filter(t => t && t.id).map(t => [t.id, normTask(t)]));
@@ -344,7 +353,12 @@ function taskXP(t) {
   if (t.due && t.completedAt && msKey(t.completedAt) <= t.due) x += 5;
   return x;
 }
-function totalXP() { let x = 0; for (const t of S.tasks.values()) if (t.status === 'done') x += taskXP(t); return x; }
+function totalXP() {
+  let x = 0;
+  for (const t of S.tasks.values()) if (t.status === 'done') x += taskXP(t);
+  for (const k in S.habitLog) x += (S.habitLog[k] || []).length * 3;
+  return x;
+}
 function levelOf(xp) {
   let L = 1;
   while (50 * L * (L + 1) <= xp) L++;
@@ -369,6 +383,55 @@ function streakInfo(counts) {
   }
   return { cur, best, bestEnd };
 }
+
+/* ---------- عادت‌ها ---------- */
+/* هر عادت: {id, name, emoji, color, days:[۰=شنبه … ۶=جمعه], createdAt, archived} ؛ ثبت‌ها: habitLog[روز] = [شناسه‌ها] */
+const HABIT_EMOJI = ['💧', '🏃', '📚', '🧘', '🥗', '😴', '✍️', '🎯', '💪', '🚶', '🧠', '🎵', '🌱', '☀️', '🦷', '💊', '🙏', '📵', '🧹', '💰'];
+const habitDoneOn = (h, k) => (S.habitLog[k] || []).includes(h.id);
+const habitDueOn = (h, k) => !h.days || !h.days.length || h.days.includes(wdOf(k));
+function setHabit(h, k, on) {
+  const a = (S.habitLog[k] || []).filter(id => id !== h.id);
+  if (on) a.push(h.id);
+  if (a.length) S.habitLog[k] = a; else delete S.habitLog[k];
+  Store.touchMeta();
+}
+/* پیوستگی: روزهای برنامه‌ریزی‌نشده زنجیره را نمی‌شکنند؛ امروزِ هنوز انجام‌نشده هم نمی‌شکند */
+function habitStreak(h) {
+  const t = todayKey();
+  let cur = 0, k = t, guard = 0;
+  if (!habitDoneOn(h, t)) k = addDays(t, -1);
+  while (guard++ < 2000) {
+    if (habitDoneOn(h, k)) cur++;
+    else if (habitDueOn(h, k)) break;
+    k = addDays(k, -1);
+    if (h.createdAt && k < msKey(h.createdAt) && !habitDoneOn(h, k)) break;
+  }
+  let best = 0, run = 0;
+  const start = h.createdAt ? msKey(h.createdAt) : addDays(t, -365);
+  for (let d = start; d <= t; d = addDays(d, 1)) {
+    if (habitDoneOn(h, d)) { run++; if (run > best) best = run; }
+    else if (habitDueOn(h, d) && d !== t) run = 0;
+  }
+  return { cur, best: Math.max(best, cur) };
+}
+function habitRate(h, days) {
+  const t = todayKey(), created = h.createdAt ? msKey(h.createdAt) : '0000';
+  let due = 0, done = 0;
+  for (let i = 0; i < days; i++) {
+    const k = addDays(t, -i);
+    if (k < created) break;
+    if (habitDueOn(h, k)) { due++; if (habitDoneOn(h, k)) done++; }
+  }
+  return due ? done / due : 0;
+}
+
+/* ---------- حال و یادداشت روزانه ---------- */
+const MOODS = [null, { e: '😞', n: 'بد' }, { e: '😕', n: 'نه چندان' }, { e: '😐', n: 'معمولی' }, { e: '🙂', n: 'خوب' }, { e: '😄', n: 'عالی' }];
+
+/* ---------- تعطیلات رسمی خورشیدی (تعطیلات قمری هر سال جابه‌جا می‌شوند و این‌جا نیستند) ---------- */
+const HOLIDAYS = { '1-1': 'نوروز', '1-2': 'نوروز', '1-3': 'نوروز', '1-4': 'نوروز', '1-12': 'روز جمهوری اسلامی', '1-13': 'روز طبیعت', '3-14': 'رحلت امام خمینی', '3-15': 'قیام ۱۵ خرداد', '11-22': 'پیروزی انقلاب اسلامی', '12-29': 'ملی شدن صنعت نفت' };
+const holidayOf = k => { const j = jOf(k); return HOLIDAYS[j.jm + '-' + j.jd] || null; };
+const isOff = k => wdOf(k) === 6 || !!holidayOf(k);
 
 /* ---------- افزودن سریع با زبان طبیعی ---------- */
 const DG = '[0-9۰-۹٠-٩]';
@@ -529,7 +592,16 @@ function buildSample() {
   const j = jOf(t0);
   add({ title: 'پرداخت اجاره', projectId: P[3].id, priority: 4, due: j.jm === 12 ? keyFromJ(j.jy + 1, 1, 1) : keyFromJ(j.jy, j.jm + 1, 1), recur: 'monthly' });
   focus[t0] = (focus[t0] || 0) + 20;
-  return { projects: P, tasks, focus };
+  const H = [['آب کافی بنوش', '💧', 0, []], ['ورزش', '🏃', 2, [0, 1, 2, 3, 4]], ['کتاب‌خوانی', '📚', 5, []], ['مدیتیشن', '🧘', 4, []]]
+    .map(([name, emoji, color, days]) => ({ id: uid('h'), name, emoji, color, days, createdAt: now - 70 * 864e5, sample: true }));
+  const hlog = {}, journal = {};
+  const hp = [0.85, 0.7, 0.55, 0.45];
+  for (let i = 69; i >= 0; i--) {
+    const k = addDays(t0, -i);
+    H.forEach((h, hi) => { if (habitDueOn(h, k) && R() < hp[hi] * (i === 0 ? 0.5 : 1)) (hlog[k] = hlog[k] || []).push(h.id); });
+    if (i > 0 && R() < 0.6) journal[k] = { mood: wpick([1, 2, 3, 4, 5], [1, 2, 4, 6, 3]), note: '', sample: true };
+  }
+  return { projects: P, tasks, focus, habits: H, habitLog: hlog, journal };
 }
 
-if (typeof module !== 'undefined') module.exports = { d2j, j2d, g2d, d2g, jOf, keyFromJ, jMonthLen, jLeap, addDays, wdOf, parseQuick, nextOccurrence, stepRecur, buildSample, streakInfo, levelOf, S, todayKey, fmtDate, relDate, faNum };
+if (typeof module !== 'undefined') module.exports = { d2j, j2d, g2d, d2g, jOf, keyFromJ, jMonthLen, jLeap, addDays, wdOf, parseQuick, nextOccurrence, stepRecur, buildSample, streakInfo, levelOf, S, Store, todayKey, fmtDate, relDate, faNum, habitStreak, habitRate, setHabit, habitDoneOn, holidayOf };

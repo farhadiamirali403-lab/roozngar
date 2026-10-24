@@ -1,0 +1,14 @@
+{
+  "appId": "ir.roozngar.app",
+  "appName": "روزنگار",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#fafaf9"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_roozngar",
+      "iconColor": "#16a34a"
+    }
+  }
+}
